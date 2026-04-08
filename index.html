@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NBA新秀潜力预测系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft YaHei", sans-serif;
+        }
+        body {
+            background-color: #f5f7fa;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .header h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        .header p {
+            color: #7f8c8d;
+        }
+        .control-panel {
+            background: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        .select-group {
+            margin-bottom: 20px;
+        }
+        .select-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        .select-group select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #dcdfe6;
+            border-radius: 8px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        .select-group select:focus {
+            border-color: #409eff;
+        }
+        .btn-group {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn-primary {
+            background-color: #409eff;
+            color: #fff;
+        }
+        .btn-primary:hover {
+            background-color: #337ecc;
+        }
+        .btn-primary:disabled {
+            background-color: #a0cfff;
+            cursor: not-allowed;
+        }
+        .btn-secondary {
+            background-color: #67c23a;
+            color: #fff;
+        }
+        .btn-secondary:hover {
+            background-color: #529b2e;
+        }
+        .loading {
+            text-align: center;
+            color: #409eff;
+            padding: 20px;
+        }
+        .error-tip {
+            background-color: #fef0f0;
+            color: #f56c6c;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #f56c6c;
+        }
+        .result-card {
+            background: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        .result-card h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f2f5;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .info-item {
+            background-color: #f8f9fa;
+            padding: 16px;
+            border-radius: 8px;
+        }
+        .info-item .label {
+            font-size: 14px;
+            color: #7f8c8d;
+            margin-bottom: 6px;
+        }
+        .info-item .value {
+            font-size: 20px;
+            font-weight: 700;
+            color: #2c3e50;
+        }
+        .score-high {
+            color: #67c23a !important;
+        }
+        .score-medium {
+            color: #e6a23c !important;
+        }
+        .score-low {
+            color: #f56c6c !important;
+        }
+        .similar-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 15px;
+        }
+        .similar-item {
+            border: 1px solid #e4e7ed;
+            border-radius: 8px;
+            padding: 16px;
+            transition: box-shadow 0.3s;
+        }
+        .similar-item:hover {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .similar-item .name {
+            font-size: 18px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 6px;
+        }
+        .similar-item .type {
+            display: inline-block;
+            background-color: #ecf5ff;
+            color: #409eff;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-bottom: 10px;
+        }
+        .similar-item .stats {
+            font-size: 14px;
+            color: #7f8c8d;
+            margin-bottom: 8px;
+        }
+        .similar-item .report {
+            font-size: 14px;
+            color: #2c3e50;
+            line-height: 1.5;
+        }
+        .feature-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .feature-item .name {
+            width: 200px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        .feature-item .progress-bar {
+            flex: 1;
+            height: 12px;
+            background-color: #f0f2f5;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        .feature-item .progress-fill {
+            height: 100%;
+            background-color: #409eff;
+            border-radius: 6px;
+            transition: width 0.5s;
+        }
+        .feature-item .value {
+            width: 60px;
+            text-align: right;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>NBA新秀潜力预测系统</h1>
+        <p>基于机器学习模型，预测新秀职业生涯发展与潜力评分</p>
+    </div>
+
+    <div class="control-panel">
+        <div class="select-group">
+            <label for="player-select">选择预测球员</label>
+            <select id="player-select">
+                <option value="">-- 正在加载新秀列表 --</option>
+            </select>
+        </div>
+        <div class="btn-group">
+            <button class="btn btn-primary" id="predict-btn" disabled>开始潜力预测</button>
+            <button class="btn btn-secondary" id="feature-btn">查看模型核心特征</button>
+        </div>
+    </div>
+
+    <div id="loading" class="loading" style="display: none;">
+        正在加载数据，请稍候...
+    </div>
+
+    <div id="error-tip" class="error-tip" style="display: none;"></div>
+
+    <div id="result-container" style="display: none;">
+        <div class="result-card">
+            <h2>球员基础信息</h2>
+            <div class="info-grid" id="base-info-grid"></div>
+        </div>
+
+        <div class="result-card">
+            <h2>潜力预测结果</h2>
+            <div class="info-grid" id="predict-info-grid"></div>
+        </div>
+
+        <div class="result-card">
+            <h2>历史相似球员模板</h2>
+            <div class="similar-list" id="similar-list"></div>
+        </div>
+    </div>
+
+    <div id="feature-container" class="result-card" style="display: none;">
+        <h2>模型特征重要性TOP10</h2>
+        <div id="core-feature-tip" style="margin-bottom: 20px;"></div>
+        <div class="feature-list" id="feature-list"></div>
+    </div>
+
+    <script>
+        // ====================== 核心配置：只需要改这里的地址即可 ======================
+        // 如果你是本地电脑当后端，填内网穿透后的公网地址，比如 https://xxx.cpolar.cn
+        // 如果你是和前端同域名部署，直接填 /api 即可
+        const BASE_API_URL = "/api";
+        // ==============================================================================
+
+        // 全局元素
+        const playerSelect = document.getElementById('player-select');
+        const predictBtn = document.getElementById('predict-btn');
+        const featureBtn = document.getElementById('feature-btn');
+        const loading = document.getElementById('loading');
+        const errorTip = document.getElementById('error-tip');
+        const resultContainer = document.getElementById('result-container');
+        const featureContainer = document.getElementById('feature-container');
+        const baseInfoGrid = document.getElementById('base-info-grid');
+        const predictInfoGrid = document.getElementById('predict-info-grid');
+        const similarList = document.getElementById('similar-list');
+        const coreFeatureTip = document.getElementById('core-feature-tip');
+        const featureList = document.getElementById('feature-list');
+
+        // 全局新秀列表数据
+        let rookieList = [];
+
+        // 页面加载时获取新秀列表
+        window.onload = async () => {
+            try {
+                showLoading();
+                const res = await fetch(`${BASE_API_URL}/rookies`, {
+                    method: 'GET',
+                    credentials: 'include', // 匹配后端allow_credentials=True配置
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!res.ok) {
+                    throw new Error(`获取新秀列表失败：${res.status} ${res.statusText}`);
+                }
+
+                rookieList = await res.json();
+                hideLoading();
+
+                // 填充下拉框
+                renderPlayerSelect();
+                predictBtn.disabled = false;
+            } catch (err) {
+                hideLoading();
+                showError(err.message);
+            }
+        };
+
+        // 渲染球员下拉框
+        function renderPlayerSelect() {
+            let html = '<option value="">-- 请选择要预测的新秀球员 --</option>';
+            rookieList.forEach(player => {
+                const showName = player.player_name_cn || player.player_name;
+                html += `<option value="${player.player_name}">${showName}</option>`;
+            });
+            playerSelect.innerHTML = html;
+        }
+
+        // 预测按钮点击事件
+        predictBtn.addEventListener('click', async () => {
+            const selectedPlayer = playerSelect.value;
+            if (!selectedPlayer) {
+                showError('请先选择一名球员');
+                return;
+            }
+
+            try {
+                showLoading();
+                hideError();
+                resultContainer.style.display = 'none';
+                featureContainer.style.display = 'none';
+
+                const res = await fetch(`${BASE_API_URL}/predict`, {
+                    method: 'POST',
+                    credentials: 'include', // 匹配跨域配置
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        player_name: selectedPlayer
+                    })
+                });
+
+                if (!res.ok) {
+                    const errData = await res.json().catch(() => ({}));
+                    throw new Error(errData.detail || `预测失败：${res.status} ${res.statusText}`);
+                }
+
+                const result = await res.json();
+                hideLoading();
+
+                // 渲染结果
+                renderResult(result);
+                resultContainer.style.display = 'block';
+            } catch (err) {
+                hideLoading();
+                showError(err.message);
+            }
+        });
+
+        // 查看特征重要性按钮点击事件
+        featureBtn.addEventListener('click', async () => {
+            try {
+                showLoading();
+                hideError();
+                resultContainer.style.display = 'none';
+                featureContainer.style.display = 'none';
+
+                const res = await fetch(`${BASE_API_URL}/feature-importance`, {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!res.ok) {
+                    const errData = await res.json().catch(() => ({}));
+                    throw new Error(errData.detail || `获取特征重要性失败：${res.status} ${res.statusText}`);
+                }
+
+                const featureData = await res.json();
+                hideLoading();
+
+                // 渲染特征
+                renderFeature(featureData);
+                featureContainer.style.display = 'block';
+            } catch (err) {
+                hideLoading();
+                showError(err.message);
+            }
+        });
+
+        // 渲染预测结果
+        function renderResult(data) {
+            // 基础信息
+            const baseInfoHtml = `
+                <div class="info-item">
+                    <div class="label">球员姓名</div>
+                    <div class="value">${data.player_name_cn}</div>
+                </div>
+                <div class="info-item">
+                    <div class="label">英文姓名</div>
+                    <div class="value">${data.player_name}</div>
+                </div>
+                <div class="info-item">
+                    <div class="label">新秀年龄</div>
+                    <div class="value">${data.newbie_age} 岁</div>
+                </div>
+                <div class="info-item">
+                    <div class="label">球员定位</div>
+                    <div class="value">${data.player_position}</div>
+                </div>
+                <div class="info-item">
+                    <div class="label">早期场均得分</div>
+                    <div class="value">${data.early_avg_score.toFixed(1)} 分</div>
+                </div>
+                <div class="info-item">
+                    <div class="label">早期出勤率</div>
+                    <div class="value ${data.durability >= 80 ? 'score-high' : data.durability >= 60 ? 'score-medium' : 'score-low'}">${data.durability.toFixed(1)}%</div>
+                </div>
+            `;
+            baseInfoGrid.innerHTML = baseInfoHtml;
+
+            // 预测信息
+            const predictInfoHtml = `
+                <div class="info-item">
+                    <div class="label">潜力评分</div>
+                    <div class="value ${data.potential_score >= 90 ? 'score-high' : data.potential_score >= 85 ? 'score-medium' : 'score-low'}">${data.potential_score}</div>
+                </div>
+                <div class="info-item">
+                    <div class="label">职业生涯类型</div>
+                    <div class="value">${data.pred_type}</div>
+                </div>
+                <div class="info-item">
+                    <div class="label">预测置信度</div>
+                    <div class="value">${(data.confidence * 100).toFixed(1)}%</div>
+                </div>
+                <div class="info-item">
+                    <div class="label">球员二级分类</div>
+                    <div class="value">${data.sub_type}</div>
+                </div>
+                <div class="info-item">
+                    <div class="label">伤病风险评分</div>
+                    <div class="value ${data.injury_risk < 40 ? 'score-high' : data.injury_risk < 60 ? 'score-medium' : 'score-low'}">${data.injury_risk.toFixed(1)}</div>
+                </div>
+                <div class="info-item">
+                    <div class="label">真实命中率TS%</div>
+                    <div class="value">${(data.ts_percent * 100).toFixed(1)}%</div>
+                </div>
+            `;
+            predictInfoGrid.innerHTML = predictInfoHtml;
+
+            // 相似球员
+            let similarHtml = '';
+            data.similar_players.forEach(player => {
+                similarHtml += `
+                    <div class="similar-item">
+                        <div class="name">${player.name}</div>
+                        <div class="type">${player.type}</div>
+                        <div class="stats">生涯${player.career_length}年 | 场均${player.score.toFixed(1)}分 ${player.reb.toFixed(1)}板 ${player.ast.toFixed(1)}助</div>
+                        <div class="report">${player.report}</div>
+                    </div>
+                `;
+            });
+            similarList.innerHTML = similarHtml;
+        }
+
+        // 渲染特征重要性
+        function renderFeature(data) {
+            coreFeatureTip.innerHTML = `<strong>模型核心影响特征：${data.core_feature}</strong>，该特征对预测结果影响最大`;
+
+            const maxImportance = data.top_features[0].importance;
+            let featureHtml = '';
+            data.top_features.forEach(item => {
+                const width = (item.importance / maxImportance) * 100;
+                featureHtml += `
+                    <div class="feature-item">
+                        <div class="name">${item.feature}</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${width}%"></div>
+                        </div>
+                        <div class="value">${item.importance.toFixed(4)}</div>
+                    </div>
+                `;
+            });
+            featureList.innerHTML = featureHtml;
+        }
+
+        // 工具函数：显示加载
+        function showLoading() {
+            loading.style.display = 'block';
+        }
+
+        // 工具函数：隐藏加载
+        function hideLoading() {
+            loading.style.display = 'none';
+        }
+
+        // 工具函数：显示错误
+        function showError(message) {
+            errorTip.innerText = message;
+            errorTip.style.display = 'block';
+        }
+
+        // 工具函数：隐藏错误
+        function hideError() {
+            errorTip.style.display = 'none';
+        }
+    </script>
+</body>
+</html>
